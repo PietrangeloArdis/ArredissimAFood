@@ -1,0 +1,367 @@
+/* Modern Calendar Styles with Enhanced Visual Appeal */
+.calendar-container {
+  /* Ensure calendar doesn't overflow on mobile */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border-radius: 1rem;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Enhanced calendar indicators with better visual hierarchy */
+.available-menu {
+  position: relative;
+}
+
+.available-menu::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.4);
+  animation: subtle-pulse 2s infinite;
+}
+
+.has-selection {
+  position: relative;
+}
+
+.has-selection::after {
+  content: '';
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  border-radius: 50%;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+  animation: success-glow 3s infinite;
+}
+
+/* Enhanced missing selection indicator */
+.missing-selection {
+  position: relative;
+}
+
+.missing-selection::before {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  border-radius: 50%;
+  animation: urgent-pulse 1.5s infinite;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.5);
+}
+
+/* Enhanced animations */
+@keyframes urgent-pulse {
+  0% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.8);
+  }
+  
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.2);
+  }
+  
+  100% {
+    transform: scale(0.9);
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+  }
+}
+
+@keyframes subtle-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  
+  50% {
+    opacity: 0.7;
+    transform: translateX(-50%) scale(1.1);
+  }
+}
+
+@keyframes success-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.4);
+  }
+  
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 2px 12px rgba(34, 197, 94, 0.6);
+  }
+}
+
+/* Both available menu and has selection */
+.available-menu.has-selection::after {
+  background: linear-gradient(90deg, #3b82f6 50%, #22c55e 50%);
+  width: 10px;
+  height: 10px;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+  animation: dual-status 2s infinite;
+}
+
+@keyframes dual-status {
+  0%, 100% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  
+  50% {
+    transform: translateX(-50%) rotate(180deg);
+  }
+}
+
+/* Enhanced hover effects with better performance */
+.calendar-day-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: transform, box-shadow;
+}
+
+.calendar-day-hover:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+
+/* Mobile optimizations with better touch targets */
+@media (max-width: 640px) {
+  .available-menu::after,
+  .has-selection::after {
+    width: 6px;
+    height: 6px;
+    bottom: 4px;
+  }
+  
+  .missing-selection::before {
+    width: 8px;
+    height: 8px;
+    top: 4px;
+    right: 4px;
+  }
+  
+  .available-menu.has-selection::after {
+    width: 8px;
+    height: 8px;
+  }
+  
+  .calendar-day-hover:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .missing-selection::before,
+  .available-menu::after,
+  .has-selection::after,
+  .available-menu.has-selection::after {
+    animation: none;
+  }
+  
+  .calendar-day-hover {
+    transition: none;
+  }
+  
+  .calendar-day-hover:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .available-menu::after {
+    background: #0000ff;
+    border: 2px solid #ffffff;
+  }
+  
+  .has-selection::after {
+    background: #008000;
+    border: 2px solid #ffffff;
+  }
+  
+  .missing-selection::before {
+    background: #ff8000;
+    border: 2px solid #ffffff;
+  }
+}
+
+/* Focus styles for keyboard navigation */
+.calendar-day-focus:focus {
+  outline: 3px solid #3b82f6;
+  outline-offset: 2px;
+  z-index: 20;
+  border-radius: 8px;
+}
+
+/* Smooth transitions for state changes */
+.calendar-day-transition {
+  transition: background-color 0.3s ease, border-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+/* Enhanced weekend styling */
+.calendar-weekend {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  color: #64748b;
+  position: relative;
+}
+
+.calendar-weekend::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 2px,
+    rgba(148, 163, 184, 0.1) 2px,
+    rgba(148, 163, 184, 0.1) 4px
+  );
+  border-radius: inherit;
+}
+
+/* Today styling enhancement with better visibility */
+.calendar-today {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  font-weight: 700;
+  box-shadow: 0 0 0 3px #f59e0b, 0 4px 12px rgba(245, 158, 11, 0.3);
+  position: relative;
+}
+
+.calendar-today::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(45deg, #f59e0b, #d97706);
+  border-radius: inherit;
+  z-index: -1;
+  animation: today-glow 2s infinite;
+}
+
+@keyframes today-glow {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* Previous/next month days with better visual hierarchy */
+.calendar-other-month {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.calendar-other-month::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: inherit;
+}
+
+/* Loading state with skeleton animation */
+.calendar-loading {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* Enhanced tooltip styling */
+.calendar-tooltip {
+  background: rgba(17, 24, 39, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Status badge enhancements */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.status-badge-booked {
+  background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+  color: #166534;
+  border: 1px solid #22c55e;
+}
+
+.status-badge-available {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border: 1px solid #3b82f6;
+}
+
+.status-badge-missing {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #92400e;
+  border: 1px solid #f59e0b;
+  animation: badge-pulse 2s infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Dark mode support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+  .calendar-container {
+    background: #1f2937;
+    border-color: #374151;
+  }
+  
+  .calendar-today {
+    background: linear-gradient(135deg, #451a03, #92400e);
+    color: #fbbf24;
+  }
+  
+  .calendar-weekend {
+    background: linear-gradient(135deg, #374151, #4b5563);
+    color: #9ca3af;
+  }
+}

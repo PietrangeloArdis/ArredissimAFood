@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Base rules
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // User profiles
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Menu selections
+    match /menuSelections/{selectionId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+    }
+
+    // Menu feedback
+    match /menuFeedbacks/{feedbackId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid;
+      allow update: if request.auth != null && 
+        request.resource.data.userId == request.auth.uid &&
+        resource.data.userId == request.auth.uid;
+      allow delete: if request.auth != null && 
+        resource.data.userId == request.auth.uid;
+    }
+
+    // Available menus
+    match /menus/{menuId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Dishes
+    match /dishes/{dishId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

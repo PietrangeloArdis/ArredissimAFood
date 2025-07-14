@@ -1,0 +1,26 @@
+# Ignore build artifacts and generated files
+dist/
+node_modules/
+.env
+.gitignore
+package-lock.json
+
+# Ignore legacy/unused files
+src/components/Admin/Dashboard.tsx
+src/components/Admin/MigrateDishes.tsx
+src/components/Calendar/MealSelectionModal.tsx
+
+# Ignore Firebase functions (not part of main app)
+functions/
+
+# Ignore configuration files that rarely change
+eslint.config.js
+postcss.config.js
+tsconfig.*.json
+vite.config.ts
+
+# Ignore Firestore rules (backend configuration)
+firestore.rules
+
+# Ignore discarded migrations
+.bolt/supabase_discarded_migrations/
