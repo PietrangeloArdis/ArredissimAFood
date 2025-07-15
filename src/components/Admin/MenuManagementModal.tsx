@@ -3,18 +3,18 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
-import { collection, doc, setDoc, getDocs, deleteDoc, query, where, getDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, deleteDoc, query, where, getDoc } from 'firebase/firestore';
 import { db } from '../../firebase/config';
 import { MenuOptions, Dish } from '../../types';
 import { Dialog } from '@headlessui/react';
-import { PlusCircle, Trash2, Save, X, Calendar as CalendarIcon, Edit } from 'lucide-react';
+import { PlusCircle, Trash2, Save, X, Calendar as CalendarIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface MenuManagementModalProps {
   isOpen: boolean;
   onClose: () => void;
   date: Date;
-  onSave: () => void; // Funzione per aggiornare il calendario principale
+  onSave: () => void;
 }
 
 export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen, onClose, date, onSave }) => {
@@ -24,7 +24,6 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [loading, setLoading] = useState(true);
-  const [removingDish, setRemovingDish] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -34,26 +33,35 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen
   }, [isOpen, date]);
 
   const fetchDishes = async () => {
-    const dishesRef = collection(db, 'dishes');
-    const q = query(dishesRef, where('visible', '==', true));
-    const snapshot = await getDocs(q);
-    const dishesData: Dish[] = [];
-    snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
-    setDishes(dishesData);
+    try {
+        const dishesRef = collection(db, 'dishes');
+        const q = query(dishesRef, where('visible', '==', true));
+        const snapshot = await getDocs(q);
+        const dishesData: Dish[] = [];
+        snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
+        setDishes(dishesData);
+    } catch (error) {
+        toast.error("Errore nel caricamento dei piatti.");
+    }
   };
 
   const fetchMenuForDate = async (dateStr: string) => {
     setLoading(true);
-    const menuRef = doc(db, 'menus', dateStr);
-    const menuDoc = await getDoc(menuRef);
-    if (menuDoc.exists()) {
-      setMenuItems(menuDoc.data().availableItems || []);
-      setIsEditingExisting(true);
-    } else {
-      setMenuItems([]);
-      setIsEditingExisting(false);
+    try {
+        const menuRef = doc(db, 'menus', dateStr);
+        const menuDoc = await getDoc(menuRef);
+        if (menuDoc.exists()) {
+            setMenuItems(menuDoc.data().availableItems || []);
+            setIsEditingExisting(true);
+        } else {
+            setMenuItems([]);
+            setIsEditingExisting(false);
+        }
+    } catch (error) {
+        toast.error("Errore nel caricamento del menù per questa data.");
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
   };
     
   const handleAddMenuItem = () => {
@@ -66,17 +74,11 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen
     setSelectedCategory('');
   };
 
-  const handleRemoveMenuItem = async (index: number) => {
-    const removedItem = menuItems[index];
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    if (!confirm(`Sei sicuro di voler rimuovere "${removedItem}" dal menù del ${formattedDate}? Questo modificherà le selezioni degli utenti.`)) return;
-    
-    setRemovingDish(removedItem);
-    const updatedItems = menuItems.filter((_, i) => i !== index);
-    setMenuItems(updatedItems);
-    // Logica di notifica e aggiornamento batch... (omessa per brevità ma presente nel tuo codice originale)
-    toast.success(`Piatto "${removedItem}" rimosso localmente. Salva per confermare.`);
-    setRemovingDish(null);
+  const handleRemoveMenuItem = (index: number) => {
+    const itemToRemove = menuItems[index];
+    if (confirm(`Sei sicuro di voler rimuovere "${itemToRemove}"?`)) {
+        setMenuItems(menuItems.filter((_, i) => i !== index));
+    }
   };
   
   const handleSaveMenu = async () => {
@@ -92,14 +94,14 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen
             return;
         }
       } else {
-          const menuData = { date: formattedDate, availableItems: menuItems, updatedAt: new Date().toISOString() };
+          const menuData: MenuOptions = { date: formattedDate, availableItems: menuItems };
           await setDoc(menuRef, menuData, { merge: true });
-          toast.success(isEditingExisting ? 'Menù aggiornato' : 'Menù creato');
+          toast.success(isEditingExisting ? 'Menù aggiornato con successo' : 'Menù creato con successo');
       }
-      onSave(); // Aggiorna il calendario
+      onSave();
       onClose();
     } catch (error) {
-        toast.error('Errore nel salvataggio del menù');
+        toast.error('Errore nel salvataggio del menù.');
     }
   };
 
@@ -107,9 +109,9 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen
 
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
-      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" aria-hidden="true" />
       <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-        <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '85vh' }}>
+        <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '90vh' }}>
             <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                     <Dialog.Title className="text-lg font-medium text-gray-900">
@@ -158,7 +160,7 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen
             <div className="p-4 border-t border-gray-200">
                 <div className="flex justify-end space-x-3">
                     <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Annulla</button>
-                    <button type="button" onClick={handleSaveMenu} disabled={loading} className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"><Save className="h-4 w-4 mr-1 inline" />Salva</button>
+                    <button type="button" onClick={handleSaveMenu} disabled={loading} className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"><Save className="h-4 w-4 mr-1 inline" /> Salva</button>
                 </div>
             </div>
         </Dialog.Panel>
@@ -166,3 +168,5 @@ export const MenuManagementModal: React.FC<MenuManagementModalProps> = ({ isOpen
     </Dialog>
   );
 };
+
+export default MenuManagementModal;
