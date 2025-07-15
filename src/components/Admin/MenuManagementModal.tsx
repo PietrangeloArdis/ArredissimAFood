@@ -29,26 +29,35 @@ export const MenuManagementModal: React.FC = () => {
   }, [isMenuModalOpen, dateForMenuModal]);
 
   const fetchDishes = async () => {
-    const dishesRef = collection(db, 'dishes');
-    const q = query(dishesRef, where('visible', '==', true));
-    const snapshot = await getDocs(q);
-    const dishesData: Dish[] = [];
-    snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
-    setDishes(dishesData);
+    try {
+        const dishesRef = collection(db, 'dishes');
+        const q = query(dishesRef, where('visible', '==', true));
+        const snapshot = await getDocs(q);
+        const dishesData: Dish[] = [];
+        snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
+        setDishes(dishesData);
+    } catch (error) {
+        toast.error("Errore nel caricamento dei piatti.");
+    }
   };
 
   const fetchMenuForDate = async (dateStr: string) => {
     setLoading(true);
-    const menuRef = doc(db, 'menus', dateStr);
-    const menuDoc = await getDoc(menuRef);
-    if (menuDoc.exists()) {
-        setMenuItems(menuDoc.data().availableItems || []);
-        setIsEditingExisting(true);
-    } else {
-        setMenuItems([]);
-        setIsEditingExisting(false);
+    try {
+        const menuRef = doc(db, 'menus', dateStr);
+        const menuDoc = await getDoc(menuRef);
+        if (menuDoc.exists()) {
+            setMenuItems(menuDoc.data().availableItems || []);
+            setIsEditingExisting(true);
+        } else {
+            setMenuItems([]);
+            setIsEditingExisting(false);
+        }
+    } catch (error) {
+        toast.error("Errore nel caricamento del menù per questa data.");
+    } finally {
+        setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleAddMenuItem = () => {
@@ -81,7 +90,9 @@ export const MenuManagementModal: React.FC = () => {
       }
       refreshCalendar();
       closeMenuModal();
-    } catch (error) { toast.error('Errore nel salvataggio'); }
+    } catch (error) {
+      toast.error('Errore nel salvataggio');
+    }
   };
 
   if (!isMenuModalOpen || !dateForMenuModal) return null;
