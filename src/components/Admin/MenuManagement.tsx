@@ -8,10 +8,10 @@ import { MenuOptions } from '../../types';
 import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CustomCalendar from '../Calendar/CustomCalendar';
-import { useAdminModal } from '../../context/AdminModalContext'; // Usa il contesto
+import { useAdminModal } from '../../context/AdminModalContext';
 
 const MenuManagement: React.FC = () => {
-  const { openMenuModal, key: refreshKey } = useAdminModal(); // Prendi la funzione per aprire il modale e la chiave di aggiornamento
+  const { openMenuModal, refreshCalendar } = useAdminModal();
   const [availableMenus, setAvailableMenus] = useState<Record<string, string[]>>({});
   const [loading, setLoading] = useState(true);
   const initialDate = new Date();
@@ -38,7 +38,7 @@ const MenuManagement: React.FC = () => {
 
   useEffect(() => {
     fetchAvailableMenus();
-  }, [refreshKey]); // Si aggiorna quando il modale salva
+  }, [refreshCalendar]);
   
   const handleDateClick = (date: Date) => {
     const today = new Date();
@@ -67,7 +67,6 @@ const MenuManagement: React.FC = () => {
           <span>Clicca su una data per gestire il menù</span>
         </div>
       </div>
-
       <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
         <div className="flex items-start">
           <CalendarIcon className="h-5 w-5 text-green-500 mt-0.5 mr-3" />
@@ -81,7 +80,6 @@ const MenuManagement: React.FC = () => {
           </div>
         </div>
       </div>
-      
       <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
         <div className="flex items-start">
           <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 mr-3" />
@@ -93,8 +91,7 @@ const MenuManagement: React.FC = () => {
           </div>
         </div>
       </div>
-      
-      {loading ? <p>Caricamento calendario...</p> : (
+      {loading ? <div className="text-center py-8">Caricamento calendario...</div> : (
         <CustomCalendar
           value={initialDate}
           onClickDay={handleDateClick}
