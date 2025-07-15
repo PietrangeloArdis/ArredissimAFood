@@ -9,20 +9,19 @@ import { Calendar as CalendarIcon, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import CustomCalendar from '../Calendar/CustomCalendar';
 
-// NUOVA PROP PER COMUNICARE CON IL PADRE
+// Prop per comunicare con il componente padre
 interface MenuManagementProps {
   onDateClick: (date: Date) => void;
 }
 
 const MenuManagement: React.FC<MenuManagementProps> = ({ onDateClick }) => {
   const [availableMenus, setAvailableMenus] = useState<Record<string, string[]>>({});
+  const [loading, setLoading] = useState(true);
   const initialDate = new Date();
   
-  useEffect(() => {
-    fetchAvailableMenus();
-  }, []);
-
+  // Funzione per ricaricare i menù
   const fetchAvailableMenus = async () => {
+    setLoading(true);
     try {
       const menusRef = collection(db, 'menus');
       const menusSnapshot = await getDocs(menusRef);
@@ -36,8 +35,14 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onDateClick }) => {
       setAvailableMenus(menus);
     } catch (error) {
       toast.error('Errore nel caricamento dei menù.');
+    } finally {
+      setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchAvailableMenus();
+  }, []);
   
   const handleDateClick = (date: Date) => {
     const today = new Date();
@@ -53,27 +58,8 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onDateClick }) => {
       toast.error('Non è possibile creare o modificare menù per date passate.');
       return;
     }
-    // Chiama la funzione del componente padre per aprire il modale
-    onDateClick(date);
-  };
-  
-  const tileDisabled = ({ date }: { date: Date }) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const checkDate = new Date(date);
-    checkDate.setHours(0, 0, 0, 0);
-    return isWeekend(date) || checkDate < today;
-  };
-  
-  const tileClassName = ({ date }: { date: Date }) => {
-    const formattedDate = format(date, 'yyyy-MM-dd');
-    let classes = 'cursor-pointer ';
-    if (availableMenus[formattedDate]) {
-      classes += 'bg-blue-100 text-blue-800 border-blue-300';
-    } else {
-      classes += 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100';
-    }
-    return classes;
+    
+    onDateClick(date); // Chiama la funzione del genitore per aprire il modale
   };
 
   return (
@@ -87,20 +73,38 @@ const MenuManagement: React.FC<MenuManagementProps> = ({ onDateClick }) => {
       </div>
 
       <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-        {/* ... le tue istruzioni e avvisi ... */}
+        <div className="flex items-start">
+          <CalendarIcon className="h-5 w-5 text-green-500 mt-0.5 mr-3" />
+          <div>
+            <h4 className="text-sm font-medium text-green-800">Istruzioni</h4>
+            <ul className="text-sm text-green-700 mt-1 space-y-1">
+              <li>• <strong>Blu:</strong> Giorni con menù esistente - clicca per modificare</li>
+              <li>• <strong>Verde:</strong> Giorni disponibili per creare nuovo menù</li>
+              <li>• <strong>Grigio:</strong> Weekend o date passate (non modificabili)</li>
+            </ul>
+          </div>
+        </div>
       </div>
       
-      <CustomCalendar
-        value={initialDate}
-        onClickDay={handleDateClick}
-        tileDisabled={tileDisabled}
-        tileClassName={tileClassName}
-        availableMenus={availableMenus}
-      />
-      
-      <div className="mt-4 flex flex-wrap gap-4">
-        {/* ... la tua legenda colori ... */}
+      <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div className="flex items-start">
+          <AlertTriangle className="h-5 w-5 text-amber-500 mt-0.5 mr-3" />
+          <div>
+            <h4 className="text-sm font-medium text-amber-800">Importante: Rimozione piatti</h4>
+            <p className="text-sm text-amber-700 mt-1">
+              Quando rimuovi un piatto da un menù, questo verrà automaticamente rimosso anche dalle selezioni degli utenti.
+            </p>
+          </div>
+        </div>
       </div>
+      
+      {loading ? <p>Caricamento calendario...</p> : (
+        <CustomCalendar
+          value={initialDate}
+          onClickDay={handleDateClick}
+          availableMenus={availableMenus}
+        />
+      )}
     </div>
   );
 };
