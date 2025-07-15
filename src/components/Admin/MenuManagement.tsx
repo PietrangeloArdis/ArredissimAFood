@@ -444,14 +444,12 @@ const initialDate = new Date();
       
 {modalOpen && selectedDate && createPortal(
         <Dialog open={modalOpen} onClose={() => setModalOpen(false)} className="relative z-50">
-          {/* Sfondo scuro e sfocato (Overlay) */}
-          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
           
-          {/* Contenitore per centrare il modale */}
-          <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+          {/* Questo contenitore usa la classe CSS che funziona e centra il modale */}
+          <div className="modal-overlay">
             <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '85vh' }}>
               
-              {/* === INTESTAZIONE MODALE === */}
+              {/* === INTESTAZIONE MODALE (non cambia) === */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <Dialog.Title className="text-lg font-medium text-gray-900">
@@ -466,7 +464,7 @@ const initialDate = new Date();
                 </div>
               </div>
               
-              {/* === CONTENUTO SCORREVOLE === */}
+              {/* === CONTENUTO SCORREVOLE (ora funziona) === */}
               <div className="flex-grow overflow-y-auto">
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900">
@@ -562,7 +560,7 @@ const initialDate = new Date();
                 )}
               </div>
 
-              {/* === FOOTER MODALE === */}
+              {/* === FOOTER MODALE (non cambia) === */}
               <div className="p-4 border-t border-gray-200 mt-auto">
                 <div className="flex justify-end space-x-3">
                   <button
