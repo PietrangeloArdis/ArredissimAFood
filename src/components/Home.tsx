@@ -22,7 +22,7 @@ const Home: React.FC = () => {
   const [recentMeals, setRecentMeals] = useState<Array<{ date: string; dishes: string[] }>>([]);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const today = new Date("2025-06-10");
+  const today = new Date();
 
   useEffect(() => {
     if (currentUser) {
