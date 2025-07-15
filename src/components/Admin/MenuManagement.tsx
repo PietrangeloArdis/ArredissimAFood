@@ -22,8 +22,8 @@ const MenuManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [removingDish, setRemovingDish] = useState<string | null>(null);
   
-  // Set initial date to June 2025 to ensure proper calendar display
-  const initialDate = new Date(2025, 5, 1); // June 1, 2025
+  // Imposta la data iniziale al giorno corrente
+const initialDate = new Date();
   
   useEffect(() => {
     fetchAvailableMenus();
