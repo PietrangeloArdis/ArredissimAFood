@@ -4,7 +4,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ModalProvider } from './context/ModalContext';
-import { AdminModalProvider } from './context/AdminModalContext'; // <-- IMPORTA IL NUOVO CONTESTO
+import { AdminModalProvider } from './context/AdminModalContext';
 import Login from './components/Login';
 import Home from './components/Home';
 import UserDashboard from './components/UserDashboard';
@@ -15,16 +15,17 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/shared/Layout';
 import UnifiedMealSelectionModal from './components/shared/UnifiedMealSelectionModal';
 import { Toaster } from 'react-hot-toast';
-import { MenuManagementModal } from './components/Admin/MenuManagementModal'; // <-- IMPORTA IL MODALE ADMIN
+import { MenuManagementModal } from './components/Admin/MenuManagementModal';
 
 function App() {
   const [adminRefreshKey, setAdminRefreshKey] = React.useState(0);
+  const handleAdminRefresh = () => setAdminRefreshKey(k => k + 1);
 
   return (
     <Router>
       <AuthProvider>
         <ModalProvider>
-          <AdminModalProvider> {/* <-- AVVOLGI L'APP CON IL NUOVO PROVIDER */}
+          <AdminModalProvider onRefresh={handleAdminRefresh}>
             <Toaster position="top-right" toastOptions={{ duration: 3000 }}/>
             <Routes>
               <Route path="/login" element={<Login />} />
@@ -38,8 +39,8 @@ function App() {
             </Routes>
             
             <UnifiedMealSelectionModal />
-            <MenuManagementModal onSave={() => setAdminRefreshKey(k => k + 1)} /> {/* <-- RENDERIZZA IL MODALE ADMIN QUI */}
-
+            <MenuManagementModal />
+            
           </AdminModalProvider>
         </ModalProvider>
       </AuthProvider>
