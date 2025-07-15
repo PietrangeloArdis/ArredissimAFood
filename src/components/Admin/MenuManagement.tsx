@@ -462,7 +462,6 @@ const initialDate = new Date();
               className="w-full max-w-md rounded-lg bg-white shadow-xl"
               style={{
                 maxHeight: '85vh',
-                overflow: 'hidden',
                 display: 'flex',
                 flexDirection: 'column',
               }}
@@ -557,7 +556,7 @@ const initialDate = new Date();
                     </div>
                   </div>
                   
-                  <div className="p-4 flex-grow space-y-2 max-h-64 overflow-y-auto">
+                  <div className="p-4 flex-grow space-y-2 overflow-y-auto">
                     {menuItems.map((item, index) => (
                       <div 
                         key={index}
