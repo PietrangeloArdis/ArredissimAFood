@@ -81,9 +81,7 @@ export const MenuManagementModal: React.FC = () => {
       }
       refreshCalendar();
       closeMenuModal();
-    } catch (error) {
-      toast.error('Errore nel salvataggio');
-    }
+    } catch (error) { toast.error('Errore nel salvataggio'); }
   };
 
   if (!isMenuModalOpen || !dateForMenuModal) return null;
