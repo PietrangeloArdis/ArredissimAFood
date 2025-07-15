@@ -442,154 +442,128 @@ const initialDate = new Date();
         </div>
       </div>
       
-      {modalOpen && selectedDate && createPortal(
-        <Dialog open={modalOpen} onClose={() => setModalOpen(false)} className="relative">
-          <Dialog.Overlay
-            style={{
-              position: 'fixed',
-              inset: 0,
-              zIndex: 99999,
-              backdropFilter: 'blur(4px)',
-              backgroundColor: 'rgba(0,0,0,0.3)',
-            }}
-          />
-          
-          <div
-            className="fixed inset-0 flex min-h-screen items-center justify-center p-4"
-            style={{ zIndex: 100000 }}
-          >
-            <Dialog.Panel 
-              className="w-full max-w-md rounded-lg bg-white shadow-xl"
-              style={{
-                maxHeight: '85vh',
-                display: 'flex',
-                flexDirection: 'column',
-              }}
-            >
+{modalOpen && selectedDate && createPortal(
+        <Dialog open={modalOpen} onClose={() => setModalOpen(false)} className="relative z-50">
+          {/* Sfondo scuro e sfocato */}
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
+
+          {/* Contenitore che centra il modale */}
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '85vh' }}>
+              
+              {/* Intestazione del Modale */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <Dialog.Title className="text-lg font-medium text-gray-900">
                     <span className="flex items-center">
                       <CalendarIcon className="h-5 w-5 mr-2 text-blue-500" />
-                      {isEditingExisting ? (
-                        <span className="flex items-center">
-                          Modifica Menù
-                          <Edit className="h-4 w-4 ml-2 text-blue-500" />
-                        </span>
-                      ) : (
-                        <span className="flex items-center">
-                          Crea Nuovo Menù
-                          <PlusCircle className="h-4 w-4 ml-2 text-green-500" />
-                        </span>
-                      )}
+                      {isEditingExisting ? 'Modifica Menù' : 'Crea Nuovo Menù'}
                     </span>
                   </Dialog.Title>
-                  <button 
-                    onClick={() => setModalOpen(false)}
-                    className="rounded-full p-1 hover:bg-gray-100"
-                  >
+                  <button onClick={() => setModalOpen(false)} className="rounded-full p-1 hover:bg-gray-100">
                     <X className="h-5 w-5 text-gray-500" />
                   </button>
                 </div>
               </div>
-              
-              <div className="p-4">
-                <h3 className="font-medium text-gray-900">
-                  {format(selectedDate, 'EEEE d MMMM yyyy', { locale: it })}
-                </h3>
-                {!isEditingExisting && (
-                  <p className="text-sm text-green-600 mt-1">
-                    Stai creando un nuovo menù per questo giorno
-                  </p>
-                )}
-              </div>
-              
-              {loading ? (
-                <div className="py-8 flex-grow flex justify-center items-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-                </div>
-              ) : (
-                <>
-                  <div className="p-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Filtra per Categoria
-                      </label>
-                      <select
-                        value={selectedCategory}
-                        onChange={(e) => setSelectedCategory(e.target.value)}
-                        className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                      >
-                        <option value="">Tutte le categorie</option>
-                        <option value="Primo">Primi</option>
-                        <option value="Secondo">Secondi</option>
-                        <option value="Contorno">Contorni</option>
-                        <option value="Vegetariano">Vegetariani</option>
-                        <option value="Altro">Altro</option>
-                      </select>
-                    </div>
 
-                    <div className="flex items-center mt-4">
-                      <select
-                        value={newMenuItem}
-                        onChange={(e) => setNewMenuItem(e.target.value)}
-                        className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                      >
-                        <option value="">Seleziona un piatto</option>
-                        {filteredDishes.map((dish) => (
-                          <option 
-                            key={dish.id} 
-                            value={dish.dishName}
-                            disabled={menuItems.includes(dish.dishName)}
-                          >
-                            {dish.dishName}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        onClick={handleAddMenuItem}
-                        disabled={!newMenuItem}
-                        className="inline-flex items-center px-3 py-2 border border-transparent rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <PlusCircle className="h-5 w-5" />
-                      </button>
-                    </div>
+              {/* Contenuto scorrevole */}
+              <div className="flex-grow overflow-y-auto">
+                <div className="p-4">
+                  <h3 className="font-medium text-gray-900">
+                    {format(selectedDate, 'EEEE d MMMM yyyy', { locale: it })}
+                  </h3>
+                  {!isEditingExisting && (
+                    <p className="text-sm text-green-600 mt-1">
+                      Stai creando un nuovo menù per questo giorno
+                    </p>
+                  )}
+                </div>
+
+                {loading ? (
+                  <div className="py-8 flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
                   </div>
-                  
-                  <div className="p-4 flex-grow space-y-2 overflow-y-auto">
-                    {menuItems.map((item, index) => (
-                      <div 
-                        key={index}
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-md"
-                      >
-                        <div className="flex-1">{item}</div>
-                        <button
-                          onClick={() => handleRemoveMenuItem(index)}
-                          disabled={removingDish === item}
-                          className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-red-500 disabled:opacity-50"
-                          title="Rimuovi piatto (notificherà gli utenti interessati)"
+                ) : (
+                  <>
+                    <div className="px-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Filtra per Categoria
+                        </label>
+                        <select
+                          value={selectedCategory}
+                          onChange={(e) => setSelectedCategory(e.target.value)}
+                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
                         >
-                          {removingDish === item ? (
-                            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-500"></div>
-                          ) : (
-                            <Trash2 className="h-4 w-4" />
-                          )}
+                          <option value="">Tutte le categorie</option>
+                          <option value="Primo">Primi</option>
+                          <option value="Secondo">Secondi</option>
+                          <option value="Contorno">Contorni</option>
+                          <option value="Vegetariano">Vegetariani</option>
+                          <option value="Altro">Altro</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center mt-4">
+                        <select
+                          value={newMenuItem}
+                          onChange={(e) => setNewMenuItem(e.target.value)}
+                          className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                        >
+                          <option value="">Seleziona un piatto</option>
+                          {filteredDishes.map((dish) => (
+                            <option 
+                              key={dish.id} 
+                              value={dish.dishName}
+                              disabled={menuItems.includes(dish.dishName)}
+                            >
+                              {dish.dishName}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={handleAddMenuItem}
+                          disabled={!newMenuItem}
+                          className="inline-flex items-center px-3 py-2 border border-transparent rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <PlusCircle className="h-5 w-5" />
                         </button>
                       </div>
-                    ))}
-                    {menuItems.length === 0 && (
-                      <div className="text-center py-4 text-gray-500">
-                        {isEditingExisting 
-                          ? 'Nessun piatto nel menù. Aggiungine uno sopra.'
-                          : 'Aggiungi piatti per creare il menù.'
-                        }
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-              
-              <div className="p-4 border-t border-gray-200">
+                    </div>
+                    
+                    <div className="p-4 space-y-2">
+                      {menuItems.map((item, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+                          <div className="flex-1">{item}</div>
+                          <button
+                            onClick={() => handleRemoveMenuItem(index)}
+                            disabled={removingDish === item}
+                            className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-red-500 disabled:opacity-50"
+                            title="Rimuovi piatto (notificherà gli utenti interessati)"
+                          >
+                            {removingDish === item ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-500"></div>
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      ))}
+                      {menuItems.length === 0 && (
+                        <div className="text-center py-4 text-gray-500">
+                          {isEditingExisting 
+                            ? 'Nessun piatto nel menù. Aggiungine uno sopra.'
+                            : 'Aggiungi piatti per creare il menù.'
+                          }
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Footer del Modale */}
+              <div className="p-4 border-t border-gray-200 mt-auto">
                 <div className="flex justify-end space-x-3">
                   <button
                     type="button"
