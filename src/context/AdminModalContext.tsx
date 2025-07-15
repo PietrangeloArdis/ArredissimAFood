@@ -22,7 +22,6 @@ export const useAdminModal = () => {
 
 interface AdminModalProviderProps {
     children: ReactNode;
-    refreshKey: number;
     onRefresh: () => void;
 }
 
