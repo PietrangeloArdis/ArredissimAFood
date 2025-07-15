@@ -455,7 +455,7 @@ const initialDate = new Date();
           />
           
           <div
-            className="fixed inset-0 flex items-center justify-center p-4"
+            className="fixed inset-0 flex min-h-screen items-center justify-center p-4"
             style={{ zIndex: 100000 }}
           >
             <Dialog.Panel 
