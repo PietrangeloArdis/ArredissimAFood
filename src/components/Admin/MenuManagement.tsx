@@ -443,14 +443,35 @@ const initialDate = new Date();
       </div>
       
 {modalOpen && selectedDate && createPortal(
-        <Dialog open={modalOpen} onClose={() => setModalOpen(false)} className="relative z-50">
-          
-          {/* Questo contenitore usa la classe CSS che funziona e centra il modale */}
-          <div className="modal-overlay">
-            <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '85vh' }}>
+        <Dialog open={modalOpen} onClose={() => setModalOpen(false)} style={{ position: 'relative', zIndex: 100000 }}>
+
+          {/* Sfondo con stile diretto per forzare il posizionamento */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)'
+          }} />
+
+          {/* Contenitore con stile diretto per forzare il centraggio */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem'
+          }}>
+            <Dialog.Panel className="w-full max-w-md rounded-2xl bg-white shadow-xl flex flex-col" style={{ maxHeight: '85vh' }}>
               
               {/* === INTESTAZIONE MODALE === */}
-              <div className="p-4 border-b border-gray-200">
+              <div className="p-4 border-b border-gray-200" style={{ flexShrink: 0 }}>
                 <div className="flex items-center justify-between">
                   <Dialog.Title className="text-lg font-medium text-gray-900">
                     <span className="flex items-center">
@@ -465,7 +486,7 @@ const initialDate = new Date();
               </div>
               
               {/* === CONTENUTO SCORREVOLE === */}
-              <div className="flex-grow overflow-y-auto">
+              <div className="overflow-y-auto" style={{ flexGrow: 1 }}>
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900">
                     {format(selectedDate, 'EEEE d MMMM yyyy', { locale: it })}
@@ -484,15 +505,10 @@ const initialDate = new Date();
                 ) : (
                   <>
                     <div className="px-4">
+                      {/* ... il resto del tuo codice per filtri e aggiunta piatti ... */}
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Filtra per Categoria
-                        </label>
-                        <select
-                          value={selectedCategory}
-                          onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="block w-full rounded-md border-gray-300 shadow-sm"
-                        >
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Filtra per Categoria</label>
+                        <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="block w-full rounded-md border-gray-300 shadow-sm">
                           <option value="">Tutte le categorie</option>
                           <option value="Primo">Primi</option>
                           <option value="Secondo">Secondi</option>
@@ -501,58 +517,32 @@ const initialDate = new Date();
                           <option value="Altro">Altro</option>
                         </select>
                       </div>
-
                       <div className="flex items-center mt-4">
-                        <select
-                          value={newMenuItem}
-                          onChange={(e) => setNewMenuItem(e.target.value)}
-                          className="flex-1 rounded-l-md border-gray-300 shadow-sm"
-                        >
+                        <select value={newMenuItem} onChange={(e) => setNewMenuItem(e.target.value)} className="flex-1 rounded-l-md border-gray-300 shadow-sm">
                           <option value="">Seleziona un piatto</option>
                           {filteredDishes.map((dish) => (
-                            <option 
-                              key={dish.id} 
-                              value={dish.dishName}
-                              disabled={menuItems.includes(dish.dishName)}
-                            >
+                            <option key={dish.id} value={dish.dishName} disabled={menuItems.includes(dish.dishName)}>
                               {dish.dishName}
                             </option>
                           ))}
                         </select>
-                        <button
-                          onClick={handleAddMenuItem}
-                          disabled={!newMenuItem}
-                          className="inline-flex items-center px-3 py-2 border border-transparent rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-                        >
+                        <button onClick={handleAddMenuItem} disabled={!newMenuItem} className="inline-flex items-center px-3 py-2 border border-transparent rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50">
                           <PlusCircle className="h-5 w-5" />
                         </button>
                       </div>
                     </div>
-                    
                     <div className="p-4 space-y-2">
                       {menuItems.map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                           <div className="flex-1">{item}</div>
-                          <button
-                            onClick={() => handleRemoveMenuItem(index)}
-                            disabled={removingDish === item}
-                            className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-red-500 disabled:opacity-50"
-                            title="Rimuovi piatto (notificherà gli utenti interessati)"
-                          >
-                            {removingDish === item ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-500"></div>
-                            ) : (
-                              <Trash2 className="h-4 w-4" />
-                            )}
+                          <button onClick={() => handleRemoveMenuItem(index)} disabled={removingDish === item} className="p-1 rounded-full hover:bg-gray-200 text-gray-500 hover:text-red-500 disabled:opacity-50" title="Rimuovi piatto (notificherà gli utenti interessati)">
+                            {removingDish === item ? (<div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-red-500"></div>) : (<Trash2 className="h-4 w-4" />)}
                           </button>
                         </div>
                       ))}
                       {menuItems.length === 0 && (
                         <div className="text-center py-4 text-gray-500">
-                          {isEditingExisting 
-                            ? 'Nessun piatto nel menù. Aggiungine uno sopra.'
-                            : 'Aggiungi piatti per creare il menù.'
-                          }
+                          {isEditingExisting ? 'Nessun piatto nel menù. Aggiungine uno sopra.' : 'Aggiungi piatti per creare il menù.'}
                         </div>
                       )}
                     </div>
@@ -561,26 +551,18 @@ const initialDate = new Date();
               </div>
 
               {/* === FOOTER MODALE === */}
-              <div className="p-4 border-t border-gray-200 mt-auto">
+              <div className="p-4 border-t border-gray-200" style={{ flexShrink: 0 }}>
                 <div className="flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setModalOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
-                  >
+                  <button type="button" onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">
                     Annulla
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleSaveMenu}
-                    disabled={loading}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
-                  >
+                  <button type="button" onClick={handleSaveMenu} disabled={loading} className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700">
                     <Save className="h-4 w-4 mr-1" />
                     {isEditingExisting ? 'Aggiorna Menù' : 'Crea Menù'}
                   </button>
                 </div>
               </div>
+
             </Dialog.Panel>
           </div>
         </Dialog>,
