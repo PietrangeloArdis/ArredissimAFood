@@ -48,10 +48,8 @@ const AdminDashboard: React.FC = () => {
               <button onClick={() => setMenuOpen(!menuOpen)} className="sm:hidden p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100">{menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}</button>
             </div>
           </div>
-          {menuOpen && (<div className="sm:hidden py-4 border-t border-gray-200">{/* Mobile menu content */}</div>)}
         </div>
       </div>
-      
       <div className="max-w-7xl mx-auto px-2 sm:px-6 py-4 sm:py-6">
         <Tab.Group selectedIndex={selectedTab} onChange={setSelectedTab}>
           <div className="flex flex-col sm:flex-row">
@@ -70,7 +68,6 @@ const AdminDashboard: React.FC = () => {
                 </Tab.List>
               </div>
             </div>
-            
             <div className="flex-1">
               <div className="bg-white shadow rounded-lg p-3 sm:p-6">
                 <Tab.Panels>
