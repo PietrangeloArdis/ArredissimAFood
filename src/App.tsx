@@ -25,7 +25,7 @@ function App() {
       <AuthProvider>
         <ModalProvider>
           <AdminModalProvider> {/* <-- AVVOLGI L'APP CON IL NUOVO PROVIDER */}
-            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
+            <Toaster position="top-right" toastOptions={{ duration: 3000 }}/>
             <Routes>
               <Route path="/login" element={<Login />} />
               <Route path="/home" element={<ProtectedRoute><Layout><Home /></Layout></ProtectedRoute>} />
