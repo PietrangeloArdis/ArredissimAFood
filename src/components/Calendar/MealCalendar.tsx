@@ -28,8 +28,8 @@ const MealCalendar: React.FC = () => {
   });
   const [refreshKey, setRefreshKey] = useState(0);
   
-  // Set initial date to June 2, 2025 (Monday) to ensure proper week alignment
-  const initialDate = new Date(2025, 5, 2); // June 2, 2025 is a Monday
+  // Imposta la data iniziale al giorno corrente
+const initialDate = new Date();
   
   useEffect(() => {
     if (!currentUser) return;
