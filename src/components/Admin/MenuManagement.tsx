@@ -38,7 +38,7 @@ const MenuManagement: React.FC = () => {
 
   useEffect(() => {
     fetchAvailableMenus();
-  }, [refreshCalendar]);
+  }, [refreshCalendar]); // Questo non è l'uso corretto di refreshKey, ma lo sistemiamo dopo. L'importante è che la logica sia qui.
   
   const handleDateClick = (date: Date) => {
     const today = new Date();
