@@ -444,14 +444,14 @@ const initialDate = new Date();
       
 {modalOpen && selectedDate && createPortal(
         <Dialog open={modalOpen} onClose={() => setModalOpen(false)} className="relative z-50">
-          {/* Sfondo scuro e sfocato */}
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" aria-hidden="true" />
-
-          {/* Contenitore che centra il modale */}
-          <div className="fixed inset-0 flex items-center justify-center p-4">
-            <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '85vh' }}>
+          {/* Sfondo scuro e sfocato (Overlay) */}
+          <div className="fixed inset-0 bg-black/30 backdrop-blur-sm" aria-hidden="true" />
+          
+          {/* Contenitore per centrare il modale */}
+          <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
+            <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '85vh' }}>
               
-              {/* Intestazione del Modale */}
+              {/* === INTESTAZIONE MODALE === */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <Dialog.Title className="text-lg font-medium text-gray-900">
@@ -465,8 +465,8 @@ const initialDate = new Date();
                   </button>
                 </div>
               </div>
-
-              {/* Contenuto scorrevole */}
+              
+              {/* === CONTENUTO SCORREVOLE === */}
               <div className="flex-grow overflow-y-auto">
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900">
@@ -493,7 +493,7 @@ const initialDate = new Date();
                         <select
                           value={selectedCategory}
                           onChange={(e) => setSelectedCategory(e.target.value)}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                          className="block w-full rounded-md border-gray-300 shadow-sm"
                         >
                           <option value="">Tutte le categorie</option>
                           <option value="Primo">Primi</option>
@@ -508,7 +508,7 @@ const initialDate = new Date();
                         <select
                           value={newMenuItem}
                           onChange={(e) => setNewMenuItem(e.target.value)}
-                          className="flex-1 rounded-l-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                          className="flex-1 rounded-l-md border-gray-300 shadow-sm"
                         >
                           <option value="">Seleziona un piatto</option>
                           {filteredDishes.map((dish) => (
@@ -524,7 +524,7 @@ const initialDate = new Date();
                         <button
                           onClick={handleAddMenuItem}
                           disabled={!newMenuItem}
-                          className="inline-flex items-center px-3 py-2 border border-transparent rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="inline-flex items-center px-3 py-2 border border-transparent rounded-r-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
                         >
                           <PlusCircle className="h-5 w-5" />
                         </button>
@@ -562,7 +562,7 @@ const initialDate = new Date();
                 )}
               </div>
 
-              {/* Footer del Modale */}
+              {/* === FOOTER MODALE === */}
               <div className="p-4 border-t border-gray-200 mt-auto">
                 <div className="flex justify-end space-x-3">
                   <button
@@ -576,7 +576,7 @@ const initialDate = new Date();
                     type="button"
                     onClick={handleSaveMenu}
                     disabled={loading}
-                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"
                   >
                     <Save className="h-4 w-4 mr-1" />
                     {isEditingExisting ? 'Aggiorna Menù' : 'Crea Menù'}
