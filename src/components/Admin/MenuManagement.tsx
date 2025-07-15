@@ -449,7 +449,7 @@ const initialDate = new Date();
           <div className="modal-overlay">
             <Dialog.Panel className="w-full max-w-md transform rounded-2xl bg-white text-left align-middle shadow-xl transition-all flex flex-col" style={{ maxHeight: '85vh' }}>
               
-              {/* === INTESTAZIONE MODALE (non cambia) === */}
+              {/* === INTESTAZIONE MODALE === */}
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <Dialog.Title className="text-lg font-medium text-gray-900">
@@ -464,7 +464,7 @@ const initialDate = new Date();
                 </div>
               </div>
               
-              {/* === CONTENUTO SCORREVOLE (ora funziona) === */}
+              {/* === CONTENUTO SCORREVOLE === */}
               <div className="flex-grow overflow-y-auto">
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900">
@@ -560,7 +560,7 @@ const initialDate = new Date();
                 )}
               </div>
 
-              {/* === FOOTER MODALE (non cambia) === */}
+              {/* === FOOTER MODALE === */}
               <div className="p-4 border-t border-gray-200 mt-auto">
                 <div className="flex justify-end space-x-3">
                   <button
