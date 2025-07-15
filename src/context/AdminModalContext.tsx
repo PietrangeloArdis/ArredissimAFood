@@ -7,7 +7,7 @@ interface AdminModalContextType {
   dateForMenuModal: Date | null;
   openMenuModal: (date: Date) => void;
   closeMenuModal: () => void;
-  refreshCalendar: () => void; // Aggiunto per l'aggiornamento
+  refreshCalendar: () => void;
 }
 
 const AdminModalContext = createContext<AdminModalContextType | undefined>(undefined);
@@ -20,10 +20,15 @@ export const useAdminModal = () => {
   return context;
 };
 
-export const AdminModalProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+interface AdminModalProviderProps {
+    children: ReactNode;
+    refreshKey: number;
+    onRefresh: () => void;
+}
+
+export const AdminModalProvider: React.FC<AdminModalProviderProps> = ({ children, onRefresh }) => {
   const [isMenuModalOpen, setIsMenuModalOpen] = useState(false);
   const [dateForMenuModal, setDateForMenuModal] = useState<Date | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   const openMenuModal = (date: Date) => {
     setDateForMenuModal(date);
@@ -35,20 +40,16 @@ export const AdminModalProvider: React.FC<{ children: ReactNode }> = ({ children
     setDateForMenuModal(null);
   };
 
-  const refreshCalendar = () => {
-    setRefreshKey(prev => prev + 1);
-  };
-
   const value = {
     isMenuModalOpen,
     dateForMenuModal,
     openMenuModal,
     closeMenuModal,
-    refreshCalendar,
+    refreshCalendar: onRefresh,
   };
 
   return (
-    <AdminModalContext.Provider value={{ ...value, key: refreshKey }}>
+    <AdminModalContext.Provider value={value}>
       {children}
     </AdminModalContext.Provider>
   );
