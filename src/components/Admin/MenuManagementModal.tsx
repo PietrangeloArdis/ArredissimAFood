@@ -75,28 +75,33 @@ export const MenuManagementModal: React.FC = () => {
     const formattedDate = format(dateForMenuModal, 'yyyy-MM-dd');
     const menuRef = doc(db, 'menus', formattedDate);
     const notifyUsers = httpsCallable(functions, 'notifyUsersOnMenuChange');
+    
+    // Rimuoviamo il piatto di test dalla lista che verrà salvata nel database
+    const finalMenuItems = menuItems.filter(item => item !== '[TESTMAIL]');
+    const isTest = menuItems.includes('[TESTMAIL]');
 
     try {
-      if (menuItems.length === 0) {
+      if (finalMenuItems.length === 0) {
         if (isEditingExisting) {
           await deleteDoc(menuRef);
           toast.success('Menù eliminato');
-          await notifyUsers({ date: formattedDate, status: 'deleted' });
+          await notifyUsers({ date: formattedDate, status: 'deleted', menuItems: [] });
         } else {
           toast.error('Aggiungi almeno un piatto');
           setSaving(false);
           return;
         }
       } else {
-        const menuData: MenuOptions = { date: formattedDate, availableItems: menuItems };
+        const menuData: MenuOptions = { date: formattedDate, availableItems: finalMenuItems };
         await setDoc(menuRef, menuData, { merge: true });
         
         const status = isEditingExisting ? 'updated' : 'created';
         toast.success(isEditingExisting ? 'Menù aggiornato' : 'Menù creato');
+        // Invia tutti i piatti alla funzione, incluso [TESTMAIL] se presente
         await notifyUsers({ date: formattedDate, status, menuItems });
       }
 
-      toast.success("Notifiche email in fase di invio...");
+      toast.success(isTest ? "Email di test inviata!" : "Notifiche email in fase di invio...");
       refreshCalendar();
       closeMenuModal();
     } catch (error) {
