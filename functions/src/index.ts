@@ -11,7 +11,7 @@ admin.initializeApp();
 const transporter = nodemailer.createTransport({
   host: functions.config().smtp.host,
   port: functions.config().smtp.port,
-  secure: true,
+  requireTLS: true, // QUESTA È LA MODIFICA CORRETTA
   auth: {
     user: functions.config().smtp.user,
     pass: functions.config().smtp.pass,
