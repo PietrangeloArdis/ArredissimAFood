@@ -1,13 +1,14 @@
 // src/components/Admin/MenuManagementModal.tsx
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { collection, doc, setDoc, getDocs, deleteDoc, query, where, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { db, functions } from '../../firebase/config'; // Importa 'functions'
+import { httpsCallable } from 'firebase/functions'; // Importa 'httpsCallable'
 import { MenuOptions, Dish } from '../../types';
 import { Dialog } from '@headlessui/react';
-import { PlusCircle, Trash2, Save, X, Calendar as CalendarIcon, Search } from 'lucide-react';
+import { PlusCircle, Trash2, Save, X, Calendar as CalendarIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAdminModal } from '../../context/AdminModalContext';
 
@@ -15,13 +16,12 @@ export const MenuManagementModal: React.FC = () => {
   const { isMenuModalOpen, closeMenuModal, dateForMenuModal, refreshCalendar } = useAdminModal();
 
   const [menuItems, setMenuItems] = useState<string[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [newMenuItem, setNewMenuItem] = useState('');
   const [isEditingExisting, setIsEditingExisting] = useState(false);
-  const [allDishes, setAllDishes] = useState<Dish[]>([]);
+  const [dishes, setDishes] = useState<Dish[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isMenuModalOpen && dateForMenuModal) {
@@ -29,26 +29,14 @@ export const MenuManagementModal: React.FC = () => {
       fetchMenuForDate(format(dateForMenuModal, 'yyyy-MM-dd'));
     }
   }, [isMenuModalOpen, dateForMenuModal]);
-  
-  // Chiude i suggerimenti se si clicca fuori
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [wrapperRef]);
-
 
   const fetchDishes = async () => {
-    const dishesRef = collection(db, 'dishes');
-    const q = query(dishesRef, where('visible', '==', true));
-    const snapshot = await getDocs(q);
-    const dishesData: Dish[] = [];
-    snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
-    setAllDishes(dishesData);
+      const dishesRef = collection(db, 'dishes');
+      const q = query(dishesRef, where('visible', '==', true));
+      const snapshot = await getDocs(q);
+      const dishesData: Dish[] = [];
+      snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
+      setDishes(dishesData);
   };
 
   const fetchMenuForDate = async (dateStr: string) => {
@@ -66,19 +54,18 @@ export const MenuManagementModal: React.FC = () => {
   };
 
   const handleAddMenuItem = () => {
-    const dishToAdd = inputValue.trim();
-    if (!dishToAdd) { toast.error('Scrivi il nome di un piatto.'); return; }
-    if (menuItems.find(item => item.toLowerCase() === dishToAdd.toLowerCase())) { 
-      toast.error('Questo piatto è già stato aggiunto.'); 
-      return; 
-    }
-    setMenuItems([...menuItems, dishToAdd]);
-    setInputValue('');
-    setShowSuggestions(false);
+    if (!newMenuItem.trim()) { toast.error('Seleziona un piatto.'); return; }
+    if (menuItems.includes(newMenuItem.trim())) { toast.error('Questo piatto è già stato aggiunto.'); return; }
+    setMenuItems([...menuItems, newMenuItem.trim()]);
+    setNewMenuItem('');
+    setSelectedCategory('');
   };
 
   const handleRemoveMenuItem = (index: number) => {
-    setMenuItems(menuItems.filter((_, i) => i !== index));
+    const itemToRemove = menuItems[index];
+    if (confirm(`Sei sicuro di voler rimuovere "${itemToRemove}"?`)) {
+        setMenuItems(menuItems.filter((_, i) => i !== index));
+    }
   };
 
   const handleSaveMenu = async () => {
@@ -87,32 +74,42 @@ export const MenuManagementModal: React.FC = () => {
 
     const formattedDate = format(dateForMenuModal, 'yyyy-MM-dd');
     const menuRef = doc(db, 'menus', formattedDate);
+    const notifyUsers = httpsCallable(functions, 'notifyUsersOnMenuChange');
 
     try {
       if (menuItems.length === 0) {
         if (isEditingExisting) {
           await deleteDoc(menuRef);
           toast.success('Menù eliminato');
+          await notifyUsers({ date: formattedDate, status: 'deleted' });
+        } else {
+          toast.error('Aggiungi almeno un piatto');
+          setSaving(false);
+          return;
         }
       } else {
         const menuData: MenuOptions = { date: formattedDate, availableItems: menuItems };
         await setDoc(menuRef, menuData, { merge: true });
+        
+        const status = isEditingExisting ? 'updated' : 'created';
         toast.success(isEditingExisting ? 'Menù aggiornato' : 'Menù creato');
+        await notifyUsers({ date: formattedDate, status, menuItems });
       }
+
+      toast.success("Notifiche email in fase di invio...");
       refreshCalendar();
       closeMenuModal();
     } catch (error) {
-      toast.error('Errore nel salvataggio');
+      console.error("Errore:", error);
+      toast.error('Errore nel salvataggio o nell\'invio delle notifiche.');
     } finally {
         setSaving(false);
     }
   };
 
   if (!isMenuModalOpen || !dateForMenuModal) return null;
-  
-  const suggestions = allDishes.filter(dish => 
-    dish.dishName.toLowerCase().includes(inputValue.toLowerCase()) && inputValue.length > 1
-  );
+
+  const filteredDishes = selectedCategory ? dishes.filter(d => d.category === selectedCategory) : dishes;
 
   return (
     <Dialog open={isMenuModalOpen} onClose={closeMenuModal} className="relative z-50">
@@ -129,53 +126,32 @@ export const MenuManagementModal: React.FC = () => {
                 <h3 className="font-medium text-gray-900">{format(dateForMenuModal, 'EEEE d MMMM yyyy', { locale: it })}</h3>
                 {loading ? <div className="text-center py-8">Caricamento...</div> : (
                     <>
-                        <div className="relative" ref={wrapperRef}>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Aggiungi un piatto</label>
-                            <div className="flex items-center">
-                                <div className="relative w-full">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                    <input
-                                      type="text"
-                                      value={inputValue}
-                                      onChange={(e) => {
-                                          setInputValue(e.target.value);
-                                          setShowSuggestions(true);
-                                      }}
-                                      onFocus={() => setShowSuggestions(true)}
-                                      placeholder="Cerca o crea un nuovo piatto..."
-                                      className="w-full rounded-l-md border-gray-300 shadow-sm pl-9"
-                                    />
-                                </div>
-                                <button onClick={handleAddMenuItem} disabled={!inputValue.trim()} className="inline-flex items-center px-3 py-2 border rounded-r-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 h-full">
-                                  <PlusCircle className="h-5 w-5" />
-                                </button>
-                            </div>
-                            {showSuggestions && inputValue.length > 1 && suggestions.length > 0 && (
-                                <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
-                                    {suggestions.map(dish => (
-                                        <li
-                                          key={dish.id}
-                                          className="px-3 py-2 cursor-pointer hover:bg-gray-100"
-                                          onMouseDown={() => {
-                                              setInputValue(dish.dishName);
-                                              setShowSuggestions(false);
-                                          }}
-                                        >
-                                          {dish.dishName}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Filtra per Categoria</label>
+                            <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="block w-full rounded-md border-gray-300 shadow-sm">
+                                <option value="">Tutte le categorie</option>
+                                <option value="Primo">Primi</option>
+                                <option value="Secondo">Secondi</option>
+                                <option value="Contorno">Contorni</option>
+                                <option value="Vegetariano">Vegetariani</option>
+                                <option value="Altro">Altro</option>
+                            </select>
+                        </div>
+                        <div className="flex items-center">
+                            <select value={newMenuItem} onChange={(e) => setNewMenuItem(e.target.value)} className="flex-1 rounded-l-md border-gray-300 shadow-sm">
+                                <option value="">Seleziona un piatto</option>
+                                {filteredDishes.map(d => <option key={d.id} value={d.dishName} disabled={menuItems.includes(d.dishName)}>{d.dishName}</option>)}
+                            </select>
+                            <button onClick={handleAddMenuItem} disabled={!newMenuItem} className="inline-flex items-center px-3 py-2 border rounded-r-md text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"><PlusCircle className="h-5 w-5" /></button>
                         </div>
                         <div className="space-y-2">
-                            <h4 className="text-sm font-medium text-gray-800 pt-2">Piatti nel menù ({menuItems.length})</h4>
                             {menuItems.map((item, index) => (
                                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
                                     <span>{item}</span>
                                     <button onClick={() => handleRemoveMenuItem(index)} className="p-1 text-red-500 hover:bg-red-100 rounded-full"><Trash2 className="h-4 w-4" /></button>
                                 </div>
                             ))}
-                            {menuItems.length === 0 && <p className="text-center text-gray-500 py-4">Aggiungi piatti al menù.</p>}
+                            {menuItems.length === 0 && <p className="text-center text-gray-500 py-4">Aggiungi piatti per creare il menù.</p>}
                         </div>
                     </>
                 )}
