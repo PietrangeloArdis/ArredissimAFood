@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { it } from 'date-fns/locale';
 import { collection, doc, setDoc, getDocs, deleteDoc, query, where, getDoc } from 'firebase/firestore';
-import { db } from '../../firebase/config';
+import { db, functions } from '../../firebase/config'; // Importa 'functions'
+import { httpsCallable } from 'firebase/functions'; // Importa 'httpsCallable'
 import { MenuOptions, Dish } from '../../types';
 import { Dialog } from '@headlessui/react';
 import { PlusCircle, Trash2, Save, X, Calendar as CalendarIcon } from 'lucide-react';
@@ -20,6 +21,7 @@ export const MenuManagementModal: React.FC = () => {
   const [dishes, setDishes] = useState<Dish[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isMenuModalOpen && dateForMenuModal) {
@@ -29,35 +31,26 @@ export const MenuManagementModal: React.FC = () => {
   }, [isMenuModalOpen, dateForMenuModal]);
 
   const fetchDishes = async () => {
-    try {
-        const dishesRef = collection(db, 'dishes');
-        const q = query(dishesRef, where('visible', '==', true));
-        const snapshot = await getDocs(q);
-        const dishesData: Dish[] = [];
-        snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
-        setDishes(dishesData);
-    } catch (error) {
-        toast.error("Errore nel caricamento dei piatti.");
-    }
+      const dishesRef = collection(db, 'dishes');
+      const q = query(dishesRef, where('visible', '==', true));
+      const snapshot = await getDocs(q);
+      const dishesData: Dish[] = [];
+      snapshot.forEach((doc) => dishesData.push({ id: doc.id, ...doc.data() } as Dish));
+      setDishes(dishesData);
   };
 
   const fetchMenuForDate = async (dateStr: string) => {
     setLoading(true);
-    try {
-        const menuRef = doc(db, 'menus', dateStr);
-        const menuDoc = await getDoc(menuRef);
-        if (menuDoc.exists()) {
-            setMenuItems(menuDoc.data().availableItems || []);
-            setIsEditingExisting(true);
-        } else {
-            setMenuItems([]);
-            setIsEditingExisting(false);
-        }
-    } catch (error) {
-        toast.error("Errore nel caricamento del menù per questa data.");
-    } finally {
-        setLoading(false);
+    const menuRef = doc(db, 'menus', dateStr);
+    const menuDoc = await getDoc(menuRef);
+    if (menuDoc.exists()) {
+        setMenuItems(menuDoc.data().availableItems || []);
+        setIsEditingExisting(true);
+    } else {
+        setMenuItems([]);
+        setIsEditingExisting(false);
     }
+    setLoading(false);
   };
 
   const handleAddMenuItem = () => {
@@ -77,21 +70,40 @@ export const MenuManagementModal: React.FC = () => {
 
   const handleSaveMenu = async () => {
     if (!dateForMenuModal) return;
+    setSaving(true);
+
     const formattedDate = format(dateForMenuModal, 'yyyy-MM-dd');
     const menuRef = doc(db, 'menus', formattedDate);
+    const notifyUsers = httpsCallable(functions, 'notifyUsersOnMenuChange');
+
     try {
       if (menuItems.length === 0) {
-        if (isEditingExisting) { await deleteDoc(menuRef); toast.success('Menù eliminato'); }
-        else { toast.error('Aggiungi almeno un piatto'); return; }
+        if (isEditingExisting) {
+          await deleteDoc(menuRef);
+          toast.success('Menù eliminato');
+          await notifyUsers({ date: formattedDate, status: 'deleted' });
+        } else {
+          toast.error('Aggiungi almeno un piatto');
+          setSaving(false);
+          return;
+        }
       } else {
         const menuData: MenuOptions = { date: formattedDate, availableItems: menuItems };
         await setDoc(menuRef, menuData, { merge: true });
+        
+        const status = isEditingExisting ? 'updated' : 'created';
         toast.success(isEditingExisting ? 'Menù aggiornato' : 'Menù creato');
+        await notifyUsers({ date: formattedDate, status, menuItems });
       }
+
+      toast.success("Notifiche email in fase di invio...");
       refreshCalendar();
       closeMenuModal();
     } catch (error) {
-      toast.error('Errore nel salvataggio');
+      console.error("Errore:", error);
+      toast.error('Errore nel salvataggio o nell\'invio delle notifiche.');
+    } finally {
+        setSaving(false);
     }
   };
 
@@ -147,7 +159,9 @@ export const MenuManagementModal: React.FC = () => {
             <div className="p-4 border-t border-gray-200">
                 <div className="flex justify-end space-x-3">
                     <button type="button" onClick={closeMenuModal} className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Annulla</button>
-                    <button type="button" onClick={handleSaveMenu} disabled={loading} className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700"><Save className="h-4 w-4 mr-1 inline" /> Salva</button>
+                    <button type="button" onClick={handleSaveMenu} disabled={loading || saving} className="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50">
+                        {saving ? 'Salvataggio...' : <><Save className="h-4 w-4 mr-1 inline" /> Salva</>}
+                    </button>
                 </div>
             </div>
         </Dialog.Panel>
