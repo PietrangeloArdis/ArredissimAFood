@@ -1,40 +1,39 @@
 // functions/src/index.ts
 
-import {onCall, HttpsError} from "firebase-functions/v2/https";
+import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import * as nodemailer from "nodemailer";
 import {format} from "date-fns";
 import {it} from "date-fns/locale";
-import * as functions from "firebase-functions";
 
 admin.initializeApp();
 
-// --- MODIFICA CHIAVE QUI ---
-// Usiamo requireTLS invece di 'secure' per compatibilità con SparkPost
 const transporter = nodemailer.createTransport({
   host: functions.config().smtp.host,
   port: functions.config().smtp.port,
-  requireTLS: true, // Questa è la modifica
+  secure: true,
   auth: {
     user: functions.config().smtp.user,
     pass: functions.config().smtp.pass,
   },
 });
-// --- FINE MODIFICA ---
 
-export const notifyUsersOnMenuChange = onCall(async (request) => {
-  if (!request.auth?.uid) {
-    throw new HttpsError("unauthenticated", "Devi essere autenticato.");
+/**
+ * FUNZIONE 1: Notifica gli utenti di una modifica al menù (Sintassi V1, Regione Corretta)
+ */
+export const notifyUsersOnMenuChange = functions.region("europe-west1").https.onCall(async (data, context) => {
+  if (!context.auth?.uid) {
+    throw new functions.https.HttpsError("unauthenticated", "Devi essere autenticato.");
   }
-  const callerDoc = await admin.firestore().collection("users").doc(request.auth.uid).get();
+  const callerDoc = await admin.firestore().collection("users").doc(context.auth.uid).get();
   const callerData = callerDoc.data();
   if (callerData?.role !== "admin") {
-    throw new HttpsError("permission-denied", "Non hai i permessi necessari.");
+    throw new functions.https.HttpsError("permission-denied", "Non hai i permessi necessari.");
   }
 
-  const {date, status, menuItems, testEmail} = request.data;
+  const {date, status, menuItems, testEmail} = data;
   if (!date || !status) {
-    throw new HttpsError("invalid-argument", "Data e stato sono obbligatori.");
+    throw new functions.https.HttpsError("invalid-argument", "Data e stato sono obbligatori.");
   }
 
   let recipients: string[] = [];
@@ -84,8 +83,8 @@ export const notifyUsersOnMenuChange = onCall(async (request) => {
     });
     return {success: true};
   } catch (error) {
-    console.error("Errore dettagliato nell'invio dell'email:", error);
-    throw new HttpsError("internal", "Impossibile inviare le notifiche email. Controlla i log per dettagli.");
+    console.error("Errore nell'invio dell'email:", error);
+    throw new functions.https.HttpsError("internal", "Impossibile inviare le notifiche email.");
   }
 });
 
