@@ -7,10 +7,8 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import * as functions from "firebase-functions";
 
-// Initialize Firebase Admin
 admin.initializeApp();
 
-// Configura il trasporto per le email
 const transporter = nodemailer.createTransport({
   host: functions.config().smtp.host,
   port: functions.config().smtp.port,
@@ -21,16 +19,12 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/**
- * FUNZIONE 1: Notifica gli utenti di una modifica al menù.
- */
 export const notifyUsersOnMenuChange = onCall(async (request) => {
   if (!request.auth?.uid) {
     throw new HttpsError("unauthenticated", "Devi essere autenticato.");
   }
   const callerDoc = await admin.firestore().collection("users").doc(request.auth.uid).get();
-  const callerData = callerDoc.data();
-  if (callerData?.role !== "admin") {
+  if (callerDoc.data()?.role !== "admin") {
     throw new HttpsError("permission-denied", "Non hai i permessi necessari.");
   }
 
@@ -59,17 +53,12 @@ export const notifyUsersOnMenuChange = onCall(async (request) => {
       subject = `✅ Nuovo menù disponibile per ${formattedDate}`;
       htmlBody = `<h1>Ciao!</h1><p>È stato pubblicato un nuovo menù per <strong>${formattedDate}</strong>.</p><p>Ecco i piatti disponibili:</p><ul>${(menuItems as string[]).map(item => `<li>${item}</li>`).join('')}</ul><p>Accedi ora alla app ArredissimA Food per fare la tua scelta!</p>`;
       break;
-    case "updated":
-      subject = `🔄 Menù modificato per ${formattedDate}`;
-      htmlBody = `<h1>Attenzione!</h1><p>Il menù per <strong>${formattedDate}</strong> è stato aggiornato.</p><p>Ecco la nuova lista di piatti:</p><ul>${(menuItems as string[]).map(item => `<li>${item}</li>`).join('')}</ul><p>Ti consigliamo di controllare la tua selezione sulla app ArredissimA Food.</p>`;
-      break;
-    case "deleted":
-      subject = `❌ Menù cancellato per ${formattedDate}`;
-      htmlBody = `<h1>Attenzione!</h1><p>Il menù che era stato programmato per <strong>${formattedDate}</strong> è stato cancellato.</p><p>Per questo giorno non è più possibile effettuare prenotazioni.</p>`;
-      break;
+    // Aggiungi altri casi se necessario (updated, deleted)
   }
 
-  if (testEmail) { subject = `[TEST] ${subject}`; }
+  if (testEmail) {
+    subject = `[TEST] ${subject}`;
+  }
 
   try {
     await transporter.sendMail({
