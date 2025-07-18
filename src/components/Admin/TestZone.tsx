@@ -7,7 +7,6 @@ import { httpsCallable } from 'firebase/functions';
 import toast from 'react-hot-toast';
 import { Mail, Send, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
-import { it } from 'date-fns/locale';
 
 const TestZone: React.FC = () => {
   const { currentUser } = useAuth();
