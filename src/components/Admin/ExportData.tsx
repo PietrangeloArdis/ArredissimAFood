@@ -84,8 +84,10 @@ const ExportData: React.FC = () => {
       const link = document.createElement('a');
       link.href = url;
       link.download = `dettaglio-pasti-${year}-${month + 1}.csv`;
+      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+      URL.revokeObjectURL(url);
       
       toast.success('Esportazione dettagliata completata con successo');
     } catch (error) {
@@ -140,8 +142,10 @@ const ExportData: React.FC = () => {
       const link = document.createElement('a');
       link.href = url;
       link.download = `riepilogo-mensile-${year}-${month + 1}.csv`;
+      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+      URL.revokeObjectURL(url);
       
       toast.success('Riepilogo mensile esportato con successo');
     } catch (error) {
@@ -213,8 +217,10 @@ const ExportData: React.FC = () => {
       const link = document.createElement('a');
       link.href = url;
       link.download = `presenze-giornaliere-${year}-${month + 1}.csv`;
+      document.body.appendChild(link);
       link.click();
-      document.body.removeChild(link);
+      link.remove();
+      URL.revokeObjectURL(url);
 
       toast.success('Report presenze giornaliere esportato con successo');
     } catch (error) {
@@ -330,8 +336,8 @@ const ExportData: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-      {/* Daily Presence Export */}
+
+        {/* Daily Presence Export (➕ adesso è DENTRO a space-y-6) */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
           <div className="flex items-start mb-4">
             <FileText className="h-6 w-6 text-green-500 mt-1" />
@@ -355,8 +361,8 @@ const ExportData: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
-      
+      </div>{/* <-- chiusura del contenitore space-y-6 */}
+
       <div className="mt-6 text-center text-sm text-gray-500">
         <CalendarIcon className="h-4 w-4 inline mr-1" />
         L'esportazione includerà i dati dal 1 {monthNames[month]} {year} al {new Date(year, month + 1, 0).getDate()} {monthNames[month]} {year}.
