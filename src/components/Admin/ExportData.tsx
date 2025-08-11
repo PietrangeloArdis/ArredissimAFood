@@ -10,6 +10,7 @@ const ExportData: React.FC = () => {
   const [year, setYear] = useState<number>(2025);
   const [month, setMonth] = useState<number>(6);
   const [loading, setLoading] = useState(false);
+  const prezzoPastoperGiorno = 2; // 🔹 Modifica qui il prezzo per ogni giorno di presenza
   
   useEffect(() => {
     fetchUsers();
@@ -49,11 +50,9 @@ const ExportData: React.FC = () => {
   
   const handleDetailedExport = async () => {
     setLoading(true);
-    
     try {
       const startDate = new Date(year, month, 1);
       const endDate = new Date(year, month + 1, 0);
-      
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
       
@@ -77,16 +76,14 @@ const ExportData: React.FC = () => {
         const date = selection.date;
         const user = getUserEmail(selection.userId);
         const items = selection.selectedItems.join(', ');
-        
         csvContent += `${date},${user},"${items}"\n`;
       });
       
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `dettaglio-pasti-${year}-${month + 1}.csv`);
-      document.body.appendChild(link);
+      link.href = url;
+      link.download = `dettaglio-pasti-${year}-${month + 1}.csv`;
       link.click();
       document.body.removeChild(link);
       
@@ -101,11 +98,9 @@ const ExportData: React.FC = () => {
   
   const handleMonthlySummaryExport = async () => {
     setLoading(true);
-    
     try {
       const startDate = new Date(year, month, 1);
       const endDate = new Date(year, month + 1, 0);
-      
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
       
@@ -117,8 +112,6 @@ const ExportData: React.FC = () => {
       );
       
       const selectionsSnapshot = await getDocs(q);
-      
-      // Create a map to store user attendance days
       const userAttendance = new Map<string, Set<string>>();
       
       selectionsSnapshot.forEach((doc) => {
@@ -137,7 +130,6 @@ const ExportData: React.FC = () => {
       ];
       
       let csvContent = 'Nome,Cognome,Mese,Giorni di Presenza\n';
-      
       userAttendance.forEach((dates, userId) => {
         const { nome, cognome } = getUserName(userId);
         csvContent += `${nome},${cognome},${monthNames[month]},${dates.size}\n`;
@@ -146,9 +138,8 @@ const ExportData: React.FC = () => {
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
-      link.setAttribute('href', url);
-      link.setAttribute('download', `riepilogo-mensile-${year}-${month + 1}.csv`);
-      document.body.appendChild(link);
+      link.href = url;
+      link.download = `riepilogo-mensile-${year}-${month + 1}.csv`;
       link.click();
       document.body.removeChild(link);
       
@@ -156,6 +147,79 @@ const ExportData: React.FC = () => {
     } catch (error) {
       console.error('Error exporting monthly summary:', error);
       toast.error('Errore durante l\'esportazione del riepilogo mensile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDailyPresenceExport = async () => {
+    setLoading(true);
+    try {
+      const startDate = new Date(year, month, 1);
+      const endDate = new Date(year, month + 1, 0);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+      
+      const selectionsRef = collection(db, 'menuSelections');
+      const q = query(
+        selectionsRef,
+        where('date', '>=', startDateStr),
+        where('date', '<=', endDateStr)
+      );
+      
+      const selectionsSnapshot = await getDocs(q);
+      const userAttendance = new Map<string, Set<string>>();
+      
+      selectionsSnapshot.forEach((doc) => {
+        const selection = doc.data() as MenuSelection;
+        if (selection.selectedItems.length > 0) {
+          if (!userAttendance.has(selection.userId)) {
+            userAttendance.set(selection.userId, new Set());
+          }
+          userAttendance.get(selection.userId)?.add(selection.date);
+        }
+      });
+
+      const daysInMonth = endDate.getDate();
+      let csvContent = 'Progressivo,Utente';
+      for (let d = 1; d <= daysInMonth; d++) csvContent += `,${d}`;
+      csvContent += ',Totale Presenze,Totale Euro\n';
+
+      let counter = 1;
+      users.filter(u => u.active).forEach((user) => {
+        const { nome, cognome } = getUserName(user.id);
+        const attendance = userAttendance.get(user.id) || new Set();
+        let row = `${counter},"${nome} ${cognome}"`;
+        let totalPresenze = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = new Date(year, month, d).toISOString().split('T')[0];
+          if (attendance.has(dateStr)) {
+            row += ',X';
+            totalPresenze++;
+          } else {
+            row += ',';
+          }
+        }
+
+        const totaleEuro = totalPresenze * prezzoPastoperGiorno;
+        row += `,${totalPresenze},${totaleEuro}`;
+        csvContent += row + '\n';
+        counter++;
+      });
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `presenze-giornaliere-${year}-${month + 1}.csv`;
+      link.click();
+      document.body.removeChild(link);
+
+      toast.success('Report presenze giornaliere esportato con successo');
+    } catch (error) {
+      console.error('Error exporting daily presence data:', error);
+      toast.error('Errore durante l\'esportazione del report presenze');
     } finally {
       setLoading(false);
     }
@@ -263,6 +327,31 @@ const ExportData: React.FC = () => {
             >
               <Download className="h-4 w-4 mr-2" />
               Esporta Report Dettagliato
+            </button>
+          </div>
+        </div>
+      </div>
+      {/* Daily Presence Export */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="flex items-start mb-4">
+            <FileText className="h-6 w-6 text-green-500 mt-1" />
+            <div className="ml-3">
+              <h3 className="text-lg font-medium text-gray-900">Report Presenze Giornaliero</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Una colonna per ogni giorno del mese con X sulle presenze e totale in euro.
+              </p>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleDailyPresenceExport}
+              disabled={loading}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${
+                loading ? 'opacity-70 cursor-not-allowed' : ''
+              }`}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Esporta Presenze Giornaliero
             </button>
           </div>
         </div>
