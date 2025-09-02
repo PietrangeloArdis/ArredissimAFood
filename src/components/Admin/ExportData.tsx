@@ -236,7 +236,7 @@ const ExportData: React.FC = () => {
   };
 
   /** =========================
-   *  Export: Presenze Giornaliero (X per giorno)
+   *  Export: Presenze Giornaliero (x per giorno, utenti ordinati)
    *  ========================= */
   const handleDailyPresenceExport = async () => {
     setLoading(true);
@@ -287,30 +287,42 @@ const ExportData: React.FC = () => {
       for (let d = 1; d <= daysInMonth; d++) csvContent += `,${d}`;
       csvContent += ',Totale Presenze,Totale Euro\n';
 
-      let counter = 1;
-      users
-        .filter((u) => (u as any).active !== false) // di default includo tutti; se esiste active=false lo escludo
-        .forEach((user) => {
-          const { nome, cognome } = getUserName(user.id);
-          const attendance = userAttendance.get(user.id) || new Set<string>();
-          let row = `${counter},"${nome} ${cognome}"`;
-          let totalPresenze = 0;
-
-          for (let d = 1; d <= daysInMonth; d++) {
-            const dateStr = toLocalISO(new Date(year, month, d));
-            if (attendance.has(dateStr)) {
-              row += ',X';
-              totalPresenze++;
-            } else {
-              row += ',';
-            }
-          }
-
-          const totaleEuro = totalPresenze * prezzoPastoperGiorno;
-          row += `,${totalPresenze},${totaleEuro}`;
-          csvContent += row + '\n';
-          counter++;
+      // 🔹 utenti ordinati per Cognome (e Nome) A→Z
+      const sortedUsers = users
+        .filter((u) => (u as any).active !== false) // includo tutti salvo active=false
+        .slice()
+        .sort((a, b) => {
+          const ac = (a.cognome || '').trim();
+          const bc = (b.cognome || '').trim();
+          const cmpC = ac.localeCompare(bc, 'it', { sensitivity: 'base' });
+          if (cmpC !== 0) return cmpC;
+          const an = (a.nome || '').trim();
+          const bn = (b.nome || '').trim();
+          return an.localeCompare(bn, 'it', { sensitivity: 'base' });
         });
+
+      let counter = 1;
+      sortedUsers.forEach((user) => {
+        const { nome, cognome } = getUserName(user.id);
+        const attendance = userAttendance.get(user.id) || new Set<string>();
+        let row = `${counter},"${nome} ${cognome}"`;
+        let totalPresenze = 0;
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = toLocalISO(new Date(year, month, d));
+          if (attendance.has(dateStr)) {
+            row += ',x'; // 🔹 minuscola
+            totalPresenze++;
+          } else {
+            row += ',';
+          }
+        }
+
+        const totaleEuro = totalPresenze * prezzoPastoperGiorno;
+        row += `,${totalPresenze},${totaleEuro}`;
+        csvContent += row + '\n';
+        counter++;
+      });
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
